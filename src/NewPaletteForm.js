@@ -17,6 +17,13 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import MailIcon from '@material-ui/icons/Mail';
+import {ChromePicker} from 'react-color';
+import Button from "@material-ui/core/Button";
+import DraggableColorBox from './DraggableColorBox';
+import {ValidatorForm, TextValidator} from 'react-material-ui-form-validator';
+
+
+const drawerWidth = 400;
 
 const styles = theme => ({
     root: {
@@ -59,6 +66,7 @@ const styles = theme => ({
     },
     content: {
       flexGrow: 1,
+      height:"calc(100vh - 64px)",
       padding: theme.spacing.unit * 3,
       transition: theme.transitions.create('margin', {
         easing: theme.transitions.easing.sharp,
@@ -77,9 +85,12 @@ const styles = theme => ({
   
   
 
-export default class NewPaletteForm extends Component {
-    state = {
-        open: false,
+class NewPaletteForm extends Component {
+      state = {
+        open: true,
+        color:"blue",
+        colorName:"",
+        colorList:[],
       };
     
       handleDrawerOpen = () => {
@@ -89,7 +100,28 @@ export default class NewPaletteForm extends Component {
       handleDrawerClose = () => {
         this.setState({ open: false });
       };
-    
+      
+      addnewColor = () => {
+        this.setState({colorList: [...this.state.colorList, {color:this.state.color, name:this.state.colorName}], colorName:"" });
+      };
+
+      handleChange = (e) => {
+        this.setState({colorName: e.target.value});
+      }
+      
+      componentDidMount() {
+        ValidatorForm.addValidationRule("isColorNameUnique", value =>
+          this.state.colorList.every(
+            ({name}) => name.toLowerCase() !== value.toLowerCase()
+          )
+        );
+        ValidatorForm.addValidationRule("isColorUnique", value =>
+          this.state.colorList.every(
+            ({color}) => color !== this.state.color
+          )
+        );
+      }
+
       render() {
         const { classes, theme } = this.props;
         const { open } = this.state;
@@ -132,23 +164,16 @@ export default class NewPaletteForm extends Component {
                 </IconButton>
               </div>
               <Divider />
-              <List>
-                {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-                  <ListItem button key={text}>
-                    <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-                    <ListItemText primary={text} />
-                  </ListItem>
-                ))}
-              </List>
-              <Divider />
-              <List>
-                {['All mail', 'Trash', 'Spam'].map((text, index) => (
-                  <ListItem button key={text}>
-                    <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-                    <ListItemText primary={text} />
-                  </ListItem>
-                ))}
-              </List>
+              <Typography variant="h4">Design your palette</Typography>
+              <div>
+                <Button variant="contained" color="secondary">Clear Palette</Button>
+                <Button variant="contained" color="primary">Random Color</Button>
+              </div>
+              <ChromePicker color={this.state.color} onChange={(newColor)=>this.setState({color:newColor.hex})}/>
+              <ValidatorForm onSubmit={this.addnewColor}>
+                <TextValidator value={this.state.colorName} onChange={this.handleChange} validators={["required", "isColorNameUnique", "isColorUnique"]} errorMessages={["This field is required", "Color Name needs to be unique", "Color must be Unique"]}/>
+                <Button variant="contained" color="primary" type="submit" style={{backgroundColor: this.state.color}}>Add Color</Button>
+              </ValidatorForm>
             </Drawer>
             <main
               className={classNames(classes.content, {
@@ -156,32 +181,16 @@ export default class NewPaletteForm extends Component {
               })}
             >
               <div className={classes.drawerHeader} />
-              <Typography paragraph>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Rhoncus dolor purus non enim praesent
-                elementum facilisis leo vel. Risus at ultrices mi tempus imperdiet. Semper risus in
-                hendrerit gravida rutrum quisque non tellus. Convallis convallis tellus id interdum
-                velit laoreet id donec ultrices. Odio morbi quis commodo odio aenean sed adipiscing.
-                Amet nisl suscipit adipiscing bibendum est ultricies integer quis. Cursus euismod quis
-                viverra nibh cras. Metus vulputate eu scelerisque felis imperdiet proin fermentum leo.
-                Mauris commodo quis imperdiet massa tincidunt. Cras tincidunt lobortis feugiat vivamus
-                at augue. At augue eget arcu dictum varius duis at consectetur lorem. Velit sed
-                ullamcorper morbi tincidunt. Lorem donec massa sapien faucibus et molestie ac.
-              </Typography>
-              <Typography paragraph>
-                Consequat mauris nunc congue nisi vitae suscipit. Fringilla est ullamcorper eget nulla
-                facilisi etiam dignissim diam. Pulvinar elementum integer enim neque volutpat ac
-                tincidunt. Ornare suspendisse sed nisi lacus sed viverra tellus. Purus sit amet volutpat
-                consequat mauris. Elementum eu facilisis sed odio morbi. Euismod lacinia at quis risus
-                sed vulputate odio. Morbi tincidunt ornare massa eget egestas purus viverra accumsan in.
-                In hendrerit gravida rutrum quisque non tellus orci ac. Pellentesque nec nam aliquam sem
-                et tortor. Habitant morbi tristique senectus et. Adipiscing elit duis tristique
-                sollicitudin nibh sit. Ornare aenean euismod elementum nisi quis eleifend. Commodo
-                viverra maecenas accumsan lacus vel facilisis. Nulla posuere sollicitudin aliquam
-                ultrices sagittis orci a.
-              </Typography>
+              
+              {this.state.colorList.map(color => (
+                <DraggableColorBox color={color.color} name={color.name}/>
+              ))}
+              
             </main>
           </div>
         );
     }
 }
+
+
+export default withStyles(styles, {withTheme:true})(NewPaletteForm);
