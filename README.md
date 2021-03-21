@@ -1,3 +1,5 @@
+Indepth color picker app inspired by Material UI
+
 <h2>Tech/ Libraries Used:</h2>
 <ul>
     <li>React.JS</li>
